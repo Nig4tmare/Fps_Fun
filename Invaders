@@ -1,0 +1,91 @@
+#Space_war_fun
+from pyexpat import model
+from ursina import *
+from random import randint
+
+def update():
+    global invaders, lasers, Lost, text
+
+    player.x += held_keys['d'] * time.dt * player.dx
+    player.x -= held_keys['a'] * time.dt * player.dx
+
+    for invader in invaders:
+        invader.y += time.dt * invader.dy
+        if invader.y < -.55:
+            Entity(model = 'quad', scale = 60, color = color.black)
+            player.y = 10
+            Text(text = "You lost the war! Retry, later.", color = color.red, origin = (0, 0), background = True)
+
+    for laser in lasers:
+        laser.y += time.dt * laser.dy
+        hit_info = laser.intersects()
+        if hit_info.hit:
+            laser.x=10
+            if hit_info.entity in invaders:
+                hit_info.entity.x = randint(-50, 50) * .01
+                hit_info.entity.y = randint(80, 120) * .01
+                Lost += 1
+                text.y = 10
+                text = Text(text= f"Lost: {Lost}", position = (-.65, .4), origin = (0, 0), scale = 2, color = color.red, background = True)
+
+def input(key):
+   global lasers 
+   if key == 'space':
+    laser = Laser()
+    lasers.append(laser)
+
+class Player(Entity):
+    def __init__(self):
+        super().__init__()
+        self.parent = feild
+        self.model = 'cube'
+        self.color = color.violet
+        self.scale = (.1, .2, .2)
+        self.position = (0, -.5, -.1)
+        self.dx = .5
+
+class Laser(Entity):
+    def __init__(self):
+        super().__init__()
+        self.parent = feild
+        self.model = 'cube'
+        self.color = color.red
+        self.texture = None
+        self.scale = (.02, .3, .1)
+        self.position = player.position
+        self.y = player.y +.2
+        self.collider = 'box'
+        self.dy = .8
+
+class Invavader(Entity):
+    def __init__(self):
+        super().__init__()
+        self.parent = feild
+        self.model = 'cube'
+        self.color = color.azure
+        self.scale = .1
+        self.position = (randint(-50, 50)*.01, randint(80, 120)*.01, -.1)
+        self.collider = 'box'
+        self.dy = -.15
+
+app = Ursina()
+
+feild_size = 19
+Entity(model = 'quad', scale = 60, texture = 'sky_sunset')
+feild = Entity(model = 'quad', color = color.rgba(255, 255, 255, 0), scale = (12, 18), position = (feild_size//2, feild_size//2, -.01))
+
+lasers = []
+player = Player()
+invaders = []
+
+Lost = 0
+#text = Text(text = "You lost the war! Retry, later.")
+
+for i in range(5):
+    invader = Invavader()
+    invaders.append(invader)
+
+camera.position = (feild_size//2, -18, -18)
+camera.rotation_x = -56
+
+app.run()
